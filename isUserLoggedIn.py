@@ -6,7 +6,7 @@ JWT_SECRET = 12
 def lambda_handler(event, context):
     aws2_dynamodb_client = boto3.client('dynamodb', region_name="us-east-1")
     
-    parsedToken = decrypt(JWT_SECRET, event['token']).split("_")
+    parsedToken = decrypt(JWT_SECRET, event['pathParameters']['token']).split("_")
     
     user = aws2_dynamodb_client.get_item(TableName='CardifyDB', Key={'email': {'S': parsedToken[0].lower()}})
     
