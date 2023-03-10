@@ -1,4 +1,5 @@
 import boto3
+import json
 
 sts_client = boto3.client('sts')
 ENCODER_SECRET = "This_is_my_awsome_secret_key"
@@ -29,8 +30,13 @@ def lambda_handler(event, context):
     
     
     return {
+        "isBase64Encoded": True,
         "statusCode" : 200,
-        "body" : response
+        "headers": {
+                    "Access-Control-Allow-Origin" : "*", 
+                    "Access-Control-Allow-Credentials" : True 
+                },
+        "body" : json.dumps(response)
     }
 
 def encrypt(key, msg):
