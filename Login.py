@@ -1,4 +1,5 @@
 import boto3
+import json
 
 sts_client = boto3.client('sts')
 
@@ -19,11 +20,15 @@ def lambda_handler(event, context):
     user = aws2_dynamodb_client.get_item(TableName='CardifyDB', Key={'email': {'S': event['email']}})
     
     
-    
     if 'Item' not in user:
         return {
+            "isBase64Encoded": True,
             "statusCode": 403,
-            "body": "Unable to authenticate, wrong email or passowrd"
+            "headers": {
+                "Access-Control-Allow-Origin" : "*", 
+                "Access-Control-Allow-Credentials" : True 
+            },
+            "body": json.dumps("Unable to authenticate, wrong email or passowrd")
         }
         
     item = user['Item']
@@ -34,19 +39,26 @@ def lambda_handler(event, context):
     if decrypted != event['password']:
         
         return {
+            "isBase64Encoded": True,
             "statusCode": 403,
-            "body": {
-                "decrypt" : encrypted,
-                "undecrypt" : str(item['password'])
-            }
+            "headers": {
+                "Access-Control-Allow-Origin" : "*", 
+                "Access-Control-Allow-Credentials" : True 
+            },
+            "body": json.dumps("Unable to authenticate, wrong email or passowrd")
         }
         
     jwtUnencoded = item['email']['S'] + '_' + item['password']['S'] 
     jwtEncoded = encrypt(JWT_SECRET, jwtUnencoded)
         
     return {
+        "isBase64Encoded": True,
         "statusCode" : 200,
-        "body" : jwtEncoded
+        "headers": {
+            "Access-Control-Allow-Origin" : "*", 
+            "Access-Control-Allow-Credentials" : True 
+        },
+        "body" : json.dumps(jwtEncoded)
     }
                  
 def encrypt(key, msg):
