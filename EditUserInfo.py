@@ -1,4 +1,5 @@
 import boto3
+import json
 
 sts_client = boto3.client('sts')
 JWT_SECRET = "KeyforJSONWebToken"
@@ -20,13 +21,23 @@ def lambda_handler(event, context):
     
     if 'Item' not in user:
         return{
+            "isBase64Encoded": True,
             "statusCode" : 403,
+            "headers": {
+                "Access-Control-Allow-Origin" : "*", 
+                "Access-Control-Allow-Credentials" : True 
+            },
             "body": "Invalid JWT token provided, can't access or modify resource"
         }
         
     if user['Item']['password']['S'] != parsedInfo[1]:
         return{
+            "isBase64Encoded": True,
             "statusCode" : 403,
+            "headers": {
+                "Access-Control-Allow-Origin" : "*", 
+                "Access-Control-Allow-Credentials" : True 
+            },
             "body": "Invalid JWT token provided, can't access or modify resource"
         }
         
@@ -34,7 +45,7 @@ def lambda_handler(event, context):
         TableName="CardifyDB", 
         Item={
             'email': {'S' : parsedInfo[0]},
-            'id' : {'S' : user['Item']['Id']['S']},
+            'id' : {'S' : user['Item']['id']['S']},
             'firstname' : {'S' : event['firstname']},
             'lastname' : {'S' : event['lastname']},
             'password': {'S': parsedInfo[1]},
@@ -42,7 +53,12 @@ def lambda_handler(event, context):
     )
     
     return {
+        "isBase64Encoded": True,
         "statusCode" : 200,
+        "headers": {
+            "Access-Control-Allow-Origin" : "*", 
+            "Access-Control-Allow-Credentials" : True 
+        },
         "body" : response
     }
                                         
