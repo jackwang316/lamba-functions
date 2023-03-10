@@ -2,19 +2,11 @@ import boto3
 import json
 import uuid
 
-sts_client = boto3.client('sts')
-JWT_SECRET = "KeyforJSONWebToken"
+JWT_SECRET = 12
 
 def lambda_handler(event, context):
-    sts_response = sts_client.assume_role(RoleArn='arn:aws:iam::515092417918:role/eric_474', 
-                                          RoleSessionName='test-session',
-                                          DurationSeconds=900)
                                           
-                                          
-    aws2_dynamodb_client = boto3.client('dynamodb', region_name='us-east-1',
-                                        aws_access_key_id=sts_response['Credentials']['AccessKeyId'],
-                                        aws_secret_access_key=sts_response['Credentials']['SecretAccessKey'],
-                                        aws_session_token=sts_response['Credentials']['SessionToken'])
+    aws2_dynamodb_client = boto3.client('dynamodb', region_name="us-east-1")
                                         
     
     #Get token / pass
@@ -25,7 +17,7 @@ def lambda_handler(event, context):
     #seperate the user info to just get the email
     parsedInfo = userInfo.split("_")
     
-    user = aws2_dynamodb_client.get_item(TableName='CardifyDB', Key={'email': {'S': parsedInfo[0]}})
+    user = aws2_dynamodb_client.get_item(TableName='CardifyDB', Key={'email': {'S': parsedInfo[0].lower()}})
     userId = user['Item']['id']['S']
     if 'Item' not in user:
         return {
@@ -52,10 +44,22 @@ def lambda_handler(event, context):
         "body" : json.dumps(response)
     }
     
-def decrypt(key, encryped):
-    msg = []
-    for i, c in enumerate(encryped):
-        key_c = ord(key[i % len(key)])
-        enc_c = ord(c)
-        msg.append(chr((enc_c - key_c) % 127))
-    return ''.join(msg)
+def get_cipherletter(new_key, letter):
+    #still need alpha to find letters
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    if letter in alpha:
+        return alpha[new_key]
+    else:
+        return letter
+
+def decrypt(key, message):
+    message = message.upper()
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = ""
+
+    for letter in message:
+        new_key = (alpha.find(letter) - key) % len(alpha)
+        result = result + get_cipherletter(new_key, letter)
+
+    return result
