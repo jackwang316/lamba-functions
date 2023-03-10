@@ -13,7 +13,7 @@ def lambda_handler(event, context):
                                         aws_secret_access_key=sts_response['Credentials']['SecretAccessKey'],
                                         aws_session_token=sts_response['Credentials']['SessionToken'])
                                         
-    deck = aws2_dynamodb_client.get_item(TableName='decks', Key={'deckID': {'N': event['pathParameters']['id']}})
+    deck = aws2_dynamodb_client.get_item(TableName='decks', Key={'deckID': {'S': event['pathParameters']['id']}})
     
     if 'Item' not in deck:
         return{
