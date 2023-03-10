@@ -1,4 +1,5 @@
 import boto3
+import json
 
 sts_client = boto3.client('sts')
 
@@ -16,13 +17,23 @@ def lambda_handler(event, context):
     try:
         response = aws2_dynamodb_client.delete_item(TableName='decks', Key={'deckID': {'N': event['pathParameters']['id']}})
         return{
+            "isBase64Encoded": True,
             "statusCode" : 200,
-            "body": response
+            "headers": {
+                "Access-Control-Allow-Origin" : "*", 
+                "Access-Control-Allow-Credentials" : True 
+            },
+            "body": json.dumps(response)
         }
-    except ClientError as err:
+    except Exception as err:
             return{
+                "isBase64Encoded": True,
                 "statusCode": 500,
-                "body" : "Couldn't delete deck {id} due to: {code}: {message}".format(id = event['pathParameters']['id'],
-                code = err.response['Error']['Code'], message = err.response['Error']['Message'])
+                "headers": {
+                    "Access-Control-Allow-Origin" : "*", 
+                    "Access-Control-Allow-Credentials" : True 
+                },
+                "body" : json.dumps("Couldn't delete deck {id} due to: {code}: {message}".format(id = event['pathParameters']['id'],
+                code = err.response['Error']['Code'], message = err.response['Error']['Message']))
             }
     
