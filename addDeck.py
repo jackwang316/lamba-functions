@@ -1,4 +1,5 @@
 import boto3
+import json
 import uuid
 
 sts_client = boto3.client('sts')
@@ -28,7 +29,12 @@ def lambda_handler(event, context):
     userId = user['Item']['id']['S']
     if 'Item' not in user:
         return {
+            "isBase64Encoded": True,
             "statusCode" : 404,
+            "headers": {
+                    "Access-Control-Allow-Origin" : "*", 
+                    "Access-Control-Allow-Credentials" : True 
+                },
             "body": "User does not exist"
         }
         
@@ -37,8 +43,13 @@ def lambda_handler(event, context):
     response = aws2_dynamodb_client.put_item(TableName="decks", Item={'userid':{'S': userId}, 'deckID':{'S': uidForDeck}})    
     
     return {
+        "isBase64Encoded": True,
         "statusCode" : 200,
-        "body" : response
+        "headers": {
+                    "Access-Control-Allow-Origin" : "*", 
+                    "Access-Control-Allow-Credentials" : True 
+        },
+        "body" : json.dumps(response)
     }
     
 def decrypt(key, encryped):
@@ -48,7 +59,3 @@ def decrypt(key, encryped):
         enc_c = ord(c)
         msg.append(chr((enc_c - key_c) % 127))
     return ''.join(msg)
-    
-    
-
-    
