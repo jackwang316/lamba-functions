@@ -1,21 +1,11 @@
 import boto3
 import json
 
-sts_client = boto3.client('sts')
-
-JWT_SECRET = "KeyforJSONWebToken"
-ENCODER_SECRET = "This_is_my_awsome_secret_key"
+JWT_SECRET = 12
+ENCODER_SECRET = 13
 
 def lambda_handler(event, context):
-    sts_response = sts_client.assume_role(RoleArn='arn:aws:iam::515092417918:role/jack_474', 
-                                          RoleSessionName='test-session',
-                                          DurationSeconds=900)
-                                          
-                                          
-    aws2_dynamodb_client = boto3.client('dynamodb', region_name='us-east-1',
-                                        aws_access_key_id=sts_response['Credentials']['AccessKeyId'],
-                                        aws_secret_access_key=sts_response['Credentials']['SecretAccessKey'],
-                                        aws_session_token=sts_response['Credentials']['SessionToken'])
+    aws2_dynamodb_client = boto3.client('dynamodb', region_name="us-east-1")
                                         
     user = aws2_dynamodb_client.get_item(TableName='CardifyDB', Key={'email': {'S': event['email']}})
     
@@ -33,10 +23,10 @@ def lambda_handler(event, context):
         
     item = user['Item']
     
-    decrypted = decrypt(ENCODER_SECRET, item['password']['S'])
+    encrypted = encrypt(ENCODER_SECRET, event['password'])
     
     
-    if decrypted != event['password']:
+    if item['password']['S'] != encrypted:
         
         return {
             "isBase64Encoded": True,
@@ -50,7 +40,9 @@ def lambda_handler(event, context):
         
     jwtUnencoded = item['email']['S'] + '_' + item['password']['S'] 
     jwtEncoded = encrypt(JWT_SECRET, jwtUnencoded)
-        
+    jwtEncoded = jwtEncoded.replace("\\", "%%")
+    
+    
     return {
         "isBase64Encoded": True,
         "statusCode" : 200,
@@ -58,22 +50,36 @@ def lambda_handler(event, context):
             "Access-Control-Allow-Origin" : "*", 
             "Access-Control-Allow-Credentials" : True 
         },
-        "body" : json.dumps(jwtEncoded)
+        "body" : jwtEncoded
     }
                  
-def encrypt(key, msg):
-    encryped = []
-    for i, c in enumerate(msg):
-        key_c = ord(key[i % len(key)])
-        msg_c = ord(c)
-        encryped.append(chr((msg_c + key_c) % 127))
-    return ''.join(encryped)
+def get_cipherletter(new_key, letter):
+    #still need alpha to find letters
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-def decrypt(key, encryped):
-    msg = []
-    for i, c in enumerate(encryped):
-        key_c = ord(key[i % len(key)])
-        enc_c = ord(c)
-        msg.append(chr((enc_c - key_c) % 127))
-    return ''.join(msg)
+    if letter in alpha:
+        return alpha[new_key]
+    else:
+        return letter
 
+def encrypt(key, message):
+    message = message.upper()
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = ""
+
+    for letter in message:
+        new_key = (alpha.find(letter) + key) % len(alpha)
+        result = result + get_cipherletter(new_key, letter)
+
+    return result
+
+def decrypt(key, message):
+    message = message.upper()
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = ""
+
+    for letter in message:
+        new_key = (alpha.find(letter) - key) % len(alpha)
+        result = result + get_cipherletter(new_key, letter)
+
+    return result
