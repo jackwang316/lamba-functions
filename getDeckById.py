@@ -1,4 +1,5 @@
 import boto3
+import json
 
 sts_client = boto3.client('sts')
 
@@ -17,11 +18,21 @@ def lambda_handler(event, context):
     
     if 'Item' not in deck:
         return{
+            "isBase64Encoded": True,
             "statusCode" : 404,
+            "headers": {
+                    "Access-Control-Allow-Origin" : "*", 
+                    "Access-Control-Allow-Credentials" : True 
+                },
             "body" : "No deck with such ID has been found"
         }
     
     return{
+        "isBase64Encoded": True,
         "statusCode" : 200,
-        "body" : deck
+        "headers": {
+                    "Access-Control-Allow-Origin" : "*", 
+                    "Access-Control-Allow-Credentials" : True 
+        },
+        "body" : json.dumps(deck)
     }
