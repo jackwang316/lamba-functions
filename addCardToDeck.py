@@ -21,10 +21,10 @@ def lambda_handler(event, context):
         response = aws2_dynamodb_client.update_item(
         TableName='decks', 
         Key={'deckID': {'S': event['pathParameters']['id']}},
-        UpdateExpression="SET Cards = :v",
+        UpdateExpression="SET Cards = list_append(Cards, :v)",
         ExpressionAttributeValues={":v": {"L": [{"SS": event['pathParameters']['card']}]}}
         )
-
+        
         return{
             "isBase64Encoded": True,
             "statusCode" : 200,
@@ -49,4 +49,3 @@ def lambda_handler(event, context):
                 message = err.response['Error']['Message']
             )
         }
-    
