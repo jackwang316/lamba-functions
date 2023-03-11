@@ -22,7 +22,7 @@ def lambda_handler(event, context):
             TableName='decks',
             Key={'deckID': {'S': deckId}},
             UpdateExpression="SET Title = :v",
-            ExpressionAttributeValues={":v": { "S": event['pathParameters']['newTitle'] }}
+            ExpressionAttributeValues={":v": { "S": event['pathParameters']['newtitle'] }}
         )
         deck = aws2_dynamodb_client.get_item(TableName='decks', Key={'deckID': {'S': deckId}})
         
