@@ -24,7 +24,7 @@ def lambda_handler(event, context):
             TableName='decks', 
             Key={'deckID': {'S': event['pathParameters']['id']}},
             UpdateExpression='SET Cards[' + cardId + '] = :v',
-            ExpressionAttributeValues={":v": {"L": [{"SS": event['pathParameters']['card']}]}}
+            ExpressionAttributeValues={":v": {"SS": event['pathParameters']['card']}}
         )
 
         return{
