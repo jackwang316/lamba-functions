@@ -16,13 +16,13 @@ def lambda_handler(event, context):
                                         aws_session_token=sts_response['Credentials']['SessionToken'])
                                         
     deck = aws2_dynamodb_client.get_item(TableName='decks', Key={'deckID': {'S': event['pathParameters']['id']}})
-        
+    
     try:
         response = aws2_dynamodb_client.update_item(
         TableName='decks', 
         Key={'deckID': {'S': event['pathParameters']['id']}},
-        UpdateExpression="SET Cards = list_append(Cards, :v)",
-        ExpressionAttributeValues={":v": {"L": [{"SS": event['pathParameters']['card']}]}}
+        UpdateExpression="SET Cards = list_append(if_not_exists(Cards, :empty_list), :v)",
+        ExpressionAttributeValues={":v": {"L": [{"SS": event['pathParameters']['card']}]}, ":empty_list": {"L": []}}
         )
         
         return{
